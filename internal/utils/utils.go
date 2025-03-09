@@ -64,7 +64,6 @@ func LoadFile(filename string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(envMap)
 	// Устанавливаем переменные окружения
 	for key, value := range envMap {
 		os.Setenv(key, value)

@@ -1,10 +1,10 @@
 package models
 
-import "time"
+import "go.mongodb.org/mongo-driver/v2/bson"
 
 type Task struct {
-	Id         int       `bson:"id"`
-	Title      string    `bson:"title"`
-	ActiveDate time.Time `bson:"activeAt"`
-	Status     string    `bson:"status"`
+	Id         bson.ObjectID `bson:"_id,omitempty" json:"id"`
+	Title      string        `bson:"title" json:"title"`
+	ActiveDate string        `bson:"activeAt" json:"activeAt"`
+	Status     string        `bson:"status" json:"status"`
 }
