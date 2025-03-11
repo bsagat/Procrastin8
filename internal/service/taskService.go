@@ -20,24 +20,26 @@ func DefaultTaskService(Repo repo.TaskRepository) *TaskService {
 	return &TaskService{Repo: Repo}
 }
 
-func (serv *TaskService) CreateTask(task models.Task) (int, error) {
+func (serv *TaskService) CreateTask(task *models.Task) (int, error) {
 	task.Status = "active"
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	unique, err := serv.Repo.IsTaskUnique(ctx, task)
+	v := repo.Validate{Db: serv.Repo.Db}
+
+	unique, err := v.IsTaskUnique(ctx, *task)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	if !unique {
-		return http.StatusBadRequest, errors.New("task data must be unique")
+		return http.StatusNotFound, errors.New("task data must be unique")
 	}
 
 	err = serv.Repo.CreateTask(ctx, task)
 	if err != nil {
 		return http.StatusBadRequest, err
 	}
-	return http.StatusOK, nil
+	return http.StatusCreated, nil
 }
 
 func (serv *TaskService) GetTasks(status string) ([]models.Task, int, error) {
@@ -63,7 +65,7 @@ func (serv *TaskService) ChangeStatus(id string) (int, error) {
 	}
 	err = serv.Repo.ChangeStatus(ctx, objID)
 	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, err
+		return http.StatusNotFound, errors.New("task status is already changed")
 	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -90,8 +92,18 @@ func (serv *TaskService) DeleteTask(id string) (int, error) {
 }
 
 func (serv *TaskService) UpdateTask(task models.Task, id string) (int, error) {
-	_, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	// TODO dodelat update
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
 
+	err = serv.Repo.UpdateTask(ctx, objID, task)
+	if err == mongo.ErrNoDocuments {
+		return http.StatusNotFound, err
+	} else if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	return http.StatusNoContent, nil
 }

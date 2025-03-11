@@ -43,12 +43,12 @@ func (h *Taskhandler) NewTaskHandler(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	code, err := h.Serv.CreateTask(task)
+	code, err := h.Serv.CreateTask(&task)
 	if err != nil {
 		c.JSON(code, gin.H{"error": err.Error()})
 		return
 	}
-	c.Status(code)
+	c.JSON(code, gin.H{"inserted_id": task.Id})
 }
 
 func (h *Taskhandler) UpdateTaskHandler(c *gin.Context) {
