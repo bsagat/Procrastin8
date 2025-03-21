@@ -7,14 +7,9 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type TaskRepository struct {
-	Db *mongo.Client
-}
-
-type Validate struct {
 	Db *mongo.Client
 }
 
@@ -35,8 +30,8 @@ func (repo *TaskRepository) CreateTask(ctx context.Context, task *models.Task) e
 	return nil
 }
 
-func (v *Validate) IsTaskUnique(ctx context.Context, task models.Task) (bool, error) {
-	collection := v.Db.Database("To-do").Collection("tasks")
+func (repo *TaskRepository) IsTaskUnique(ctx context.Context, task models.Task) (bool, error) {
+	collection := repo.Db.Database("To-do").Collection("tasks")
 	filter := bson.M{
 		"$and": []bson.M{
 			{"title": task.Title},
@@ -50,10 +45,47 @@ func (v *Validate) IsTaskUnique(ctx context.Context, task models.Task) (bool, er
 	return count == 0, nil
 }
 
+/*
+db.tasks.aggregate([
+  {
+    $match: {
+      activeAt: { $lte: new Date() } // Фильтр: задачи с датой до сегодня
+    }
+  },
+  {
+    $sort: { createdAt: 1 } // Сортировка по дате создания (или activeAt)
+  },
+  {
+    $addFields: {
+      dayOfWeek: { $dayOfWeek: "$activeAt" }, // Получаем день недели (1=вс, 7=сб)
+      isWeekend: { $in: [{ $dayOfWeek: "$activeAt" }, [1, 7]] } // Проверяем выходной
+    }
+  },
+  {
+    $addFields: {
+      title: {
+        $cond: {
+          if: "$isWeekend",
+          then: { $concat: ["ВЫХОДНОЙ- ", "$title"] },
+          else: "$title"
+        }
+      }
+    }
+  },
+  {
+    $project: {
+      _id: 1,
+      title: 1,
+      activeAt: 1
+    }
+  }
+]);
+*/
+
 func (repo *TaskRepository) GetTasks(ctx context.Context, status string) ([]models.Task, error) {
 	var tasks []models.Task
 	collection := repo.Db.Database("To-do").Collection("tasks")
-	findoptions := options.Find()
+	collection.Aggregate(ctx, []interface{})
 	cursor, err := collection.Find(ctx, bson.M{"status": status}, findoptions)
 	if err != nil {
 		return nil, err

@@ -7,9 +7,9 @@ services:
     ports:
       - "27017:27017"
     env_file:
-      - .env
+      - ../config/.env
     volumes:
-      - ./init.js:/docker-entrypoint-initdb.d/init.js:ro
+      - ./init:/docker-entrypoint-initdb.d/init.js:ro
       - mongovolume:/data/db
 
 volumes:

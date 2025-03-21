@@ -25,14 +25,12 @@ func (serv *TaskService) CreateTask(task *models.Task) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	v := repo.Validate{Db: serv.Repo.Db}
-
-	unique, err := v.IsTaskUnique(ctx, *task)
+	unique, err := serv.Repo.IsTaskUnique(ctx, *task)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 	if !unique {
-		return http.StatusNotFound, errors.New("task data must be unique")
+		return http.StatusBadRequest, errors.New("task data must be unique")
 	}
 
 	err = serv.Repo.CreateTask(ctx, task)
@@ -51,7 +49,7 @@ func (serv *TaskService) GetTasks(status string) ([]models.Task, int, error) {
 		return nil, http.StatusInternalServerError, err
 	}
 	if tasks == nil {
-		return nil, http.StatusNotFound, mongo.ErrNoDocuments
+		return nil, http.StatusNotFound, nil
 	}
 	return tasks, http.StatusOK, nil
 }
@@ -65,7 +63,7 @@ func (serv *TaskService) ChangeStatus(id string) (int, error) {
 	}
 	err = serv.Repo.ChangeStatus(ctx, objID)
 	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, errors.New("task status is already changed")
+		return http.StatusBadRequest, errors.New("task status is already changed")
 	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}

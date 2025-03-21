@@ -22,5 +22,4 @@ func TestCreateTask(t *testing.T) {
 		t.Error(err)
 
 	}
-	return
 }

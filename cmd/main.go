@@ -5,22 +5,32 @@ import (
 	"log/slog"
 
 	"TodoApp/internal/app"
-	"TodoApp/internal/models"
-
-	"github.com/gin-gonic/gin"
+	repo "TodoApp/internal/dal"
 )
 
 func main() {
+	slog.Info("Starting the program...")
 
-	taskHandler := app.Setup()
-	router := gin.Default()
+	// Чтение конфигурации
+	config := app.FetchConfig()
+	slog.Info("Configuration parsing finished...")
 
-	router.POST("/api/todo-list/tasks", taskHandler.NewTaskHandler)
-	router.PUT("/api/todo-list/tasks/:id", taskHandler.UpdateTaskHandler)
-	router.DELETE("/api/todo-list/tasks/:id", taskHandler.DeleteTaskHandler)
-	router.PUT("/api/todo-list/tasks/:id/done", taskHandler.FinishTaskHandler)
-	router.GET("/api/todo-list/tasks", taskHandler.TaskListsHandler)
+	// Подключение к базе данных
+	db, ctx, err := repo.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	slog.Info("Database connect finished...")
 
-	slog.Info("Server has been started on :" + *models.Port)
-	log.Fatal(router.Run(":" + *models.Port))
+	defer db.Disconnect(ctx)
+
+	// Создание роутера для сервера
+	router := app.Setup(db)
+	slog.Info("Server setup finished...")
+
+	// Запуск сервера
+	slog.Info("Server has been started on :" + *config.Port)
+	if err := router.Run(":" + *config.Port); err != nil {
+		log.Fatal("Server start error :" + err.Error())
+	}
 }

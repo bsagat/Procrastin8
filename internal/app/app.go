@@ -4,30 +4,24 @@ import (
 	repo "TodoApp/internal/dal"
 	"TodoApp/internal/handlers"
 	"TodoApp/internal/service"
-	"TodoApp/internal/utils"
-	"log"
-	"log/slog"
+
+	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-// Вызывает функции которые нужны для запуска сервера (подключение к бд, чтение .env, командной строки)
-func Setup() *handlers.Taskhandler {
-	slog.Info("Starting the program...")
-
-	err := utils.LoadFile(".env")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	utils.CheckFlags()
-
-	db, err := repo.Connect()
-	if err != nil {
-		slog.Error("Failed to Connect to the Database: " + err.Error())
-		log.Fatal(err)
-	}
+// Подключается к базе данных и создает роутер для приложения
+func Setup(db *mongo.Client) *gin.Engine {
 
 	taskRepo := repo.DefaultTaskRepository(db)
 	taskService := service.DefaultTaskService(*taskRepo)
 	taskHandler := handlers.DefaultTaskHandler(*taskService)
-	return taskHandler
+
+	router := gin.Default()
+
+	router.POST("/api/todo-list/tasks", taskHandler.NewTaskHandler)
+	router.PUT("/api/todo-list/tasks/:id", taskHandler.UpdateTaskHandler)
+	router.DELETE("/api/todo-list/tasks/:id", taskHandler.DeleteTaskHandler)
+	router.PUT("/api/todo-list/tasks/:id/done", taskHandler.FinishTaskHandler)
+	router.GET("/api/todo-list/tasks", taskHandler.TaskListsHandler)
+	return router
 }

@@ -1,15 +1,3 @@
-// fmt.Println(c.Query("id"))
-// fmt.Println(c.Params.ByName("id"))
-
-// id, exist := c.Get("id")
-
-// c.JSON(200, gin.H{"message": "pong", "id": id})
-
-// fmt.Println(exist)
-// fmt.Fprintln(c.Writer, c.Value("id"))
-// fmt.Println(c.Keys)
-// fmt.Println(c.Params.Get("gg"))
-
 package handlers
 
 import (
@@ -30,7 +18,9 @@ func DefaultTaskHandler(serv service.TaskService) *Taskhandler {
 	return &Taskhandler{Serv: serv}
 }
 
+// Обработчик логики создания задач
 func (h *Taskhandler) NewTaskHandler(c *gin.Context) {
+	// Парсинг JSON запроса
 	var task models.Task
 	err := c.BindJSON(&task)
 	if err != nil {
@@ -38,25 +28,32 @@ func (h *Taskhandler) NewTaskHandler(c *gin.Context) {
 		return
 	}
 
+	// Валидация задачи
 	err = h.ValidateTask(task)
 	if err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{"message": err.Error()})
 		return
 	}
+
+	// Вызов бизнес логики создания задачи
 	code, err := h.Serv.CreateTask(&task)
 	if err != nil {
-		c.JSON(code, gin.H{"error": err.Error()})
+		c.JSON(code, gin.H{"message": err.Error()})
 		return
 	}
 	c.JSON(code, gin.H{"inserted_id": task.Id})
 }
 
+// Обработчик логики обновления задач
 func (h *Taskhandler) UpdateTaskHandler(c *gin.Context) {
+	// Чтение параметров запроса
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "id field is empty"})
 		return
 	}
+
+	// Парсинг JSON  запросы
 	var task models.Task
 	err := c.BindJSON(&task)
 	if err != nil {
@@ -64,6 +61,7 @@ func (h *Taskhandler) UpdateTaskHandler(c *gin.Context) {
 		return
 	}
 
+	// Вызов бизнес логики обновления задач
 	code, err := h.Serv.UpdateTask(task, id)
 	if err != nil {
 		c.JSON(code, gin.H{"message": err.Error()})
@@ -72,12 +70,15 @@ func (h *Taskhandler) UpdateTaskHandler(c *gin.Context) {
 	c.Status(code)
 }
 
+// Обработчик логики удаления задач
 func (h *Taskhandler) DeleteTaskHandler(c *gin.Context) {
+	// Чтение параметров запроса
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "id field is empty"})
 		return
 	}
+	// Вызов бизнес логики удаления задачи
 	code, err := h.Serv.DeleteTask(id)
 	if err != nil {
 		c.JSON(code, gin.H{"message": err.Error()})
@@ -86,12 +87,15 @@ func (h *Taskhandler) DeleteTaskHandler(c *gin.Context) {
 	c.Status(code)
 }
 
+// Обработчик логики завершения задачи
 func (h *Taskhandler) FinishTaskHandler(c *gin.Context) {
+	// Чтение параметров запроса
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "id field is empty"})
 		return
 	}
+	// Вызов сервисной функции
 	code, err := h.Serv.ChangeStatus(id)
 	if err != nil {
 		c.JSON(code, gin.H{"message": err.Error()})
@@ -100,16 +104,24 @@ func (h *Taskhandler) FinishTaskHandler(c *gin.Context) {
 	c.Status(code)
 }
 
+// Обработчик для получения информации о всех задачах
 func (h *Taskhandler) TaskListsHandler(c *gin.Context) {
+	// Чтение параметров запроса
 	status := c.DefaultQuery("status", "active")
+	if status != "active" && status != "done" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "status parameter is invalid"})
+		return
+	}
+	// Вызов сервисной функции
 	tasks, code, err := h.Serv.GetTasks(status)
 	if err != nil {
 		c.JSON(code, gin.H{"message": err.Error()})
 		return
 	}
-	c.AsciiJSON(code, tasks)
+	c.JSON(code, tasks)
 }
 
+// Логика валидации задачи
 func (h *Taskhandler) ValidateTask(task models.Task) error {
 	if !task.Id.IsZero() {
 		return errors.New("id string should be empty")
@@ -126,7 +138,7 @@ func (h *Taskhandler) ValidateTask(task models.Task) error {
 		return errors.New("status field must be empty")
 	}
 	if task.Title == "" {
-		return errors.New("title field is not exis")
+		return errors.New("title field is not exist")
 	}
 	if len(task.Title) > 200 {
 		return errors.New("title lenght is greater than 200")
