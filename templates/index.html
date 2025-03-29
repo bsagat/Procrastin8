@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Procrastin8 To-do API client</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f9;
+            color: #333;
+            margin: 20px;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #4a90e2;
+        }
+        h2 {
+            color: #ff6f61;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #357ab8;
+        }
+        input, select {
+            padding: 8px;
+            margin: 10px;
+            width: 90%;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #response {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background: #f9f9f9;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1> API Client</h1>
+        
+        <h2>Создать задачу</h2>
+        <input type="text" id="taskTitle" placeholder="Название задачи">
+        <input type="date" id="taskDeadline">
+        <button onclick="createTask()">Создать</button>
+
+        <h2>Получить список задач</h2>
+        <select id="taskStatus">
+            <option value="active">Active</option>
+            <option value="done">Done</option>
+        </select>
+        <button onclick="getTasks()">Получить</button>
+
+        <h2>Получить задачу по ID</h2>
+        <input type="text" id="taskIdGet" placeholder="Введите ID">
+        <button onclick="getTaskById()">Получить</button>
+
+        <h2>Обновить задачу</h2>
+        <input type="text" id="taskIdUpdate" placeholder="Введите ID">
+        <input type="text" id="taskTitleUpdate" placeholder="Новое название">
+        <input type="date" id="taskDeadlineUpdate">
+        <button onclick="updateTask()">Обновить</button>
+
+        <h2>Удалить задачу</h2>
+        <input type="text" id="taskIdDelete" placeholder="Введите ID">
+        <button onclick="deleteTask()">Удалить</button>
+
+        <h2>Ответ сервера:</h2>
+        <div id="response">Здесь будет отображаться ответ сервера...</div>
+    </div>
+
+    <script>
+        const apiUrl = "http://localhost:8080/api/todo-list";
+        function displayResponse(data) {
+            document.getElementById("response").textContent = JSON.stringify(data, null, 2);
+        }
+        function createTask() {
+            const title = document.getElementById("taskTitle").value;
+            const activeAt = document.getElementById("taskDeadline").value;
+            fetch(`${apiUrl}/tasks`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, activeAt })
+            })
+            .then(res => res.json())
+            .then(displayResponse)
+            .catch(error => displayResponse({ error: error.message }));
+        }
+        function getTasks() {
+            const status = document.getElementById("taskStatus").value;
+            fetch(`${apiUrl}/tasks?status=${status}`)
+            .then(res => res.json())
+            .then(displayResponse)
+            .catch(error => displayResponse({ error: error.message }));
+        }
+        function getTaskById() {
+            const id = document.getElementById("taskIdGet").value;
+            if (!id) return alert("Введите ID!");
+            fetch(`${apiUrl}/tasks/${id}`)
+            .then(res => res.json())
+            .then(displayResponse)
+            .catch(error => displayResponse({ error: error.message }));
+        }
+        function updateTask() {
+            const id = document.getElementById("taskIdUpdate").value;
+            const title = document.getElementById("taskTitleUpdate").value;
+            const activeAt = document.getElementById("taskDeadlineUpdate").value;
+            if (!id) return alert("Введите ID!");
+            fetch(`${apiUrl}/tasks/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title, activeAt })
+            })
+            .then(res => {
+                if (res.status === 204) {
+                    displayResponse({ message: "Задача успешно обновлена" });
+                } else {
+                    return res.json().then(displayResponse);
+                }
+            })
+            .catch(error => displayResponse({ error: error.message }));
+        }
+        function deleteTask() {
+            const id = document.getElementById("taskIdDelete").value;
+            if (!id) return alert("Введите ID!");
+            fetch(`${apiUrl}/tasks/${id}`, { method: "DELETE" })
+            .then(res => {
+                if (res.status === 204) {
+                    displayResponse({ message: "Задача удалена" });
+                } else {
+                    return res.json().then(displayResponse);
+                }
+            })
+            .catch(error => displayResponse({ error: error.message }));
+        }
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-package service
+package test
 
 import (
 	repo "TodoApp/internal/dal"
@@ -22,4 +22,5 @@ func TestCreateTask(t *testing.T) {
 		t.Error(err)
 
 	}
+
 }

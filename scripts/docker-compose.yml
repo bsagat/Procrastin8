@@ -9,8 +9,24 @@ services:
     env_file:
       - ../config/.env
     volumes:
-      - ./init:/docker-entrypoint-initdb.d/init.js:ro
+      - ./init/init.js:/docker-entrypoint-initdb.d/init.js
       - mongovolume:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  app:
+    build:
+      context: ..
+      dockerfile: scripts/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      mongo:
+        condition: service_healthy
 
 volumes:
   mongovolume:

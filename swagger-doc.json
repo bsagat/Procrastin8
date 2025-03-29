@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "To-do app OpenAPI классификация",
+    "title": "To-do app API",
     "version": "0.0.1"
   },
   "servers": [
@@ -40,6 +40,16 @@
               }
             }
           },
+          "400": {
+            "description": "Возвращает если данные введенные пользователем не валидные",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "default": {
             "description": "Все нестандартное",
             "content": {
@@ -53,8 +63,8 @@
         }
       },
       "get": {
-        "summary": "Получить информацию о задачах по статусу",
-        "description": "Этот запрос нужен для получения списка задач по статусу\n  * Может вернуть ошибку, если данные не валидны\n  * Может вернуть ошибку, если произошла ошибка на стороне сервера",
+        "summary": "Получить список задач",
+        "description": "Этот запрос нужен для получения списка задач , присуствует фильтрация по статусу (по умолчанию: active)\n  * Может вернуть ошибку, если данные не валидны\n  * Может вернуть ошибку, если произошла ошибка на стороне сервера",
         "tags": [
           "tasks"
         ],
@@ -62,7 +72,7 @@
         "parameters": [
           {
             "name": "status",
-            "description": "Статус задачи",
+            "description": "Статус задачи, может принимать только active и done",
             "in": "query",
             "schema": {
               "type": "string",
@@ -73,6 +83,26 @@
         "responses": {
           "200": {
             "description": "Успешный ответ сервера со списком отфильтрованных задач",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tasks"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Возвращает если данные введенные пользователем не валидны",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Возвращает код, если список задач пустой",
             "content": {
               "application/json": {
                 "schema": {
@@ -95,9 +125,70 @@
       }
     },
     "/tasks/{id}": {
+      "get": {
+        "summary": "Получить информацию о задаче",
+        "description": "Этот запрос нужен для получения информации о конкретной задаче по её идентификатору.\n  * Может вернуть ошибку, если идентификатор невалиден.\n  * Может вернуть ошибку, если задача не найдена.\n  * Может вернуть ошибку, если произошла ошибка",
+        "operationId": "GetTask",
+        "tags": [
+          "tasks"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "description": "Идентификатор задачи",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Успешный ответ сервера с нужной задачей",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Возвращает если данные введенные пользователем не валидны",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Возвращает код, если задача не найдена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Все нестандартное",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
       "put": {
         "summary": "Обновить задачу",
-        "description": "Этот запрос нужен для изменения данных задачи\n  * Может вернуть ошибку, если данные не валидны\n  * Может вернуть ошибку, если произошла ошибка на стороне сервера\n  * Может вернуть ошибку, если задача не нашлась на стороне сервера",
+        "description": "Этот запрос нужен для изменения данных задачи\n  * Может вернуть ошибку, если данные не валидны\n  * Может вернуть ошибку, если произошла ошибка на стороне сервера\n  * Может вернуть ошибку, если задача не найдена",
         "operationId": "UpdateTask",
         "tags": [
           "tasks"
@@ -126,6 +217,26 @@
         "responses": {
           "204": {
             "description": "Успешный ответ сервера"
+          },
+          "400": {
+            "description": "Возвращает если данные введенные пользователем не валидны",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Возвращает код, если задача не найдена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "default": {
             "description": "Все нестандартное",
@@ -160,6 +271,26 @@
         "responses": {
           "204": {
             "description": "Успешный ответ сервера"
+          },
+          "400": {
+            "description": "Возвращает если данные введенные пользователем не валидны",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Возвращает код, если задача не найдена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "default": {
             "description": "Все нестандартное",

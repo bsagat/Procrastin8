@@ -3,6 +3,7 @@ package repo
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -32,6 +33,6 @@ func Connect() (*mongo.Client, context.Context, error) {
 		return nil, nil, fmt.Errorf("MongoDB не отвечает: %w", err)
 	}
 
-	fmt.Println("✅ Успешное подключение к MongoDB")
+	slog.Info("✅ Успешное подключение к MongoDB")
 	return client, ctx, nil
 }

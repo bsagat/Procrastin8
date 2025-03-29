@@ -15,6 +15,7 @@ func main() {
 	config := app.FetchConfig()
 	slog.Info("Configuration parsing finished...")
 
+	slog.Info("Starting DB connect...")
 	// Подключение к базе данных
 	db, ctx, err := repo.Connect()
 	if err != nil {
