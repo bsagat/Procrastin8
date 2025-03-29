@@ -1,10 +1,12 @@
 package app
 
 import (
+	"net/http"
+	"os"
+
 	repo "TodoApp/internal/dal"
 	"TodoApp/internal/handlers"
 	"TodoApp/internal/service"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -12,7 +14,6 @@ import (
 
 // Подключается к базе данных и создает роутер для приложения
 func Setup(db *mongo.Client) *gin.Engine {
-
 	taskRepo := repo.DefaultTaskRepository(db)
 	taskService := service.DefaultTaskService(taskRepo)
 	taskHandler := handlers.DefaultTaskHandler(taskService)
@@ -21,7 +22,10 @@ func Setup(db *mongo.Client) *gin.Engine {
 	router.LoadHTMLFiles("templates/index.html")
 
 	router.GET("/api/todo-list", func(ctx *gin.Context) { // Основная страница
-		ctx.HTML(http.StatusOK, "index.html", nil)
+		domain := os.Getenv("API_DOMAIN")
+		port := os.Getenv("port")
+		url := domain + port + "/api/todo-list"
+		ctx.HTML(http.StatusOK, "index.html", gin.H{"API_URL": url})
 	})
 	router.POST("/api/todo-list/tasks", taskHandler.NewTaskHandler)            // Создать одну задачу
 	router.GET("/api/todo-list/tasks/:id", taskHandler.GetTaskHandler)         // Получить одну задачу из бд

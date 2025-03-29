@@ -60,7 +60,7 @@
 </head>
 <body>
     <div class="container">
-        <h1> API Client</h1>
+        <h1> Procrastin8</h1>
         
         <h2>Создать задачу</h2>
         <input type="text" id="taskTitle" placeholder="Название задачи">
@@ -88,12 +88,16 @@
         <input type="text" id="taskIdDelete" placeholder="Введите ID">
         <button onclick="deleteTask()">Удалить</button>
 
+        <h2>Пометить задачу выполненной</h2>
+        <input type="text" id="taskIdDone" placeholder="Введите ID">
+        <button onclick="finishTask()">Пометить выполненной</button>
+
         <h2>Ответ сервера:</h2>
         <div id="response">Здесь будет отображаться ответ сервера...</div>
     </div>
 
     <script>
-        const apiUrl = "http://localhost:8080/api/todo-list";
+        const apiUrl = "{{.API_URL}}";
         function displayResponse(data) {
             document.getElementById("response").textContent = JSON.stringify(data, null, 2);
         }
@@ -150,6 +154,19 @@
             .then(res => {
                 if (res.status === 204) {
                     displayResponse({ message: "Задача удалена" });
+                } else {
+                    return res.json().then(displayResponse);
+                }
+            })
+            .catch(error => displayResponse({ error: error.message }));
+        }
+        function finishTask() {
+            const id = document.getElementById("taskIdDone").value;
+            if (!id) return alert("Введите ID!");
+            fetch(`${apiUrl}/tasks/${id}/done`, { method: "PUT" })
+            .then(res => {
+                if (res.status === 204) {
+                    displayResponse({ message: "Задача помечена как выполненная" });
                 } else {
                     return res.json().then(displayResponse);
                 }

@@ -1,12 +1,12 @@
 package service
 
 import (
-	"TodoApp/internal/domain"
 	"context"
-	"errors"
 	"log/slog"
 	"net/http"
 	"time"
+
+	"TodoApp/internal/domain"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -34,16 +34,16 @@ func (serv *TaskService) CreateTask(task *domain.Task) (int, error) {
 		return http.StatusInternalServerError, err
 	}
 	if !unique {
-		return http.StatusBadRequest, errors.New("task data must be unique")
+		return http.StatusBadRequest, domain.ErrNotUniqueTask
 	}
 	task.ActiveDateTime, err = time.Parse("2006-01-02", task.ActiveDateStr)
 	if err != nil {
 		slog.Error("Time Parse error: " + err.Error())
-		return http.StatusBadRequest, errors.New("active date field is invalid: time parsing error")
+		return http.StatusBadRequest, domain.ErrActiveDateError
 	}
 	err = serv.Repo.CreateTask(ctx, task)
 	if err != nil {
-		return http.StatusBadRequest, err
+		return http.StatusInternalServerError, err
 	}
 	return http.StatusCreated, nil
 }
@@ -60,7 +60,7 @@ func (serv *TaskService) GetTask(id string) (domain.Task, int, error) {
 	task, err = serv.Repo.GetTask(ctx, objid)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return task, http.StatusNotFound, errors.New("task is not found")
+			return task, http.StatusNotFound, domain.ErrTaskNotFound
 		}
 		return task, http.StatusInternalServerError, err
 	}
@@ -69,6 +69,9 @@ func (serv *TaskService) GetTask(id string) (domain.Task, int, error) {
 
 // Логика обработки запроса на получение всех задач из базы данных
 func (serv *TaskService) GetTasks(status string) ([]domain.Task, int, error) {
+	if status != "active" && status != "done" {
+		return nil, http.StatusBadRequest, domain.ErrInvalidStatus
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -93,11 +96,11 @@ func (serv *TaskService) UpdateTask(task domain.Task, id string) (int, error) {
 	task.ActiveDateTime, err = time.Parse("2006-01-02", task.ActiveDateStr)
 	if err != nil {
 		slog.Error("Time Parse error: " + err.Error())
-		return http.StatusBadRequest, errors.New("active date field is invalid: time parsing error")
+		return http.StatusBadRequest, domain.ErrActiveDateError
 	}
 	err = serv.Repo.UpdateTask(ctx, objID, task)
 	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, errors.New("task is not found")
+		return http.StatusNotFound, domain.ErrTaskNotFound
 	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -116,7 +119,7 @@ func (serv *TaskService) DeleteTask(id string) (int, error) {
 
 	err = serv.Repo.DeleteTask(ctx, objID)
 	if err == mongo.ErrNoDocuments {
-		return http.StatusNotFound, errors.New("task is not found")
+		return http.StatusNotFound, domain.ErrTaskNotFound
 	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -132,8 +135,10 @@ func (serv *TaskService) ChangeStatus(id string) (int, error) {
 		return http.StatusBadRequest, err
 	}
 	err = serv.Repo.ChangeStatus(ctx, objID)
-	if err == mongo.ErrNoDocuments {
-		return http.StatusBadRequest, errors.New("task status is already changed")
+	if err == domain.ErrTaskChanged {
+		return http.StatusBadRequest, err
+	} else if err == mongo.ErrNoDocuments {
+		return http.StatusBadRequest, domain.ErrTaskNotFound
 	} else if err != nil {
 		return http.StatusInternalServerError, err
 	}

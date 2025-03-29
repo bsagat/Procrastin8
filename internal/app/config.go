@@ -1,13 +1,14 @@
 package app
 
 import (
-	"TodoApp/internal/utils"
 	"bufio"
 	"flag"
 	"io"
 	"log"
 	"os"
 	"strings"
+
+	"TodoApp/internal/utils"
 )
 
 type SetupOptions struct {
@@ -88,6 +89,10 @@ func CheckFlags() *SetupOptions {
 	// Чтение командной строки
 	flag.Parse()
 
+	err := os.Setenv("port", *opts.Port)
+	if err != nil {
+		log.Fatal(err)
+	}
 	// Выводит информацию о запуске
 	if *opts.HelpFlag {
 		utils.PrintHelp()

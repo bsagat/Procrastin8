@@ -1,10 +1,11 @@
 package repo
 
 import (
-	"TodoApp/internal/domain"
 	"context"
 	"fmt"
 	"time"
+
+	"TodoApp/internal/domain"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -154,18 +155,19 @@ func (repo *TaskRepository) ChangeStatus(ctx context.Context, id bson.ObjectID) 
 		return err
 	}
 	if res.ModifiedCount == 0 {
-		return mongo.ErrNoDocuments
+		return domain.ErrTaskChanged
 	}
 	return nil
 }
 
 // Проверка уникальности задачи
 func (repo *TaskRepository) IsTaskUnique(ctx context.Context, task domain.Task) (bool, error) {
+	fmt.Println(task)
 	collection := repo.Db.Database("To-Do").Collection("tasks")
 	filter := bson.M{
 		"$and": []bson.M{
 			{"title": task.Title},
-			{"activeAt": task.ActiveDateStr},
+			{"activeAtStr": task.ActiveDateStr},
 		},
 	}
 	count, err := collection.CountDocuments(ctx, filter)

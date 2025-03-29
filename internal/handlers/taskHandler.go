@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"TodoApp/internal/domain"
 	"errors"
 	"log/slog"
 	"net/http"
 	"time"
+
+	"TodoApp/internal/domain"
 
 	"github.com/gin-gonic/gin"
 )
@@ -82,11 +83,6 @@ func (h *Taskhandler) GetTaskHandler(c *gin.Context) {
 func (h *Taskhandler) TaskListsHandler(c *gin.Context) {
 	// Чтение параметров запроса
 	status := c.DefaultQuery("status", "active")
-	if status != "active" && status != "done" {
-		slog.Error("Query reading error: status parameter is invalid")
-		c.JSON(http.StatusBadRequest, gin.H{"message": "status parameter is invalid"})
-		return
-	}
 	// Вызов сервисной функции
 	tasks, code, err := h.Serv.GetTasks(status)
 	if err != nil {
