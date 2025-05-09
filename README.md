@@ -1,139 +1,164 @@
 # Procrastin8
 
-Procrastin8 - это микросервис для планирования досуга с полным CRUD-функционалом для работы с задачами.
+**Procrastin8** is a microservice for leisure task planning with full CRUD functionality.
 
-Технологии которые были использованы:
-  - Docker  (для запуска приложения)
-  - MongoDB (noSQL база данных)
-  - Golang (фреймворк gin)
-  - Swagger (для документации API)
+## ✨ Technologies Used:
 
-## Запуск через Docker
+* **Docker** – for containerized application
+* **MongoDB** – NoSQL database
+* **Golang** – Gin framework
+* **Swagger** – API documentation
 
-Сборка контейнера:
+---
+
+## 🚀 Run with Docker
+
+Build the container:
+
 ```sh
 docker build -t my-go-app .
 ```
 
-Запуск контейнера:
+Run the container:
+
 ```sh
 docker run -it -p 8080:8080 my-go-app
 ```
 
 ---
 
-## Запуск через MakeFile
+## ⚙️ Run with Makefile
 
-Сборка контейнера:
+Build and start the container:
+
 ```sh
 make up
 ```
 
-Остановить контейнер:
+Stop the container:
+
 ```sh
 make down
 ```
 
-Логирование:
+View logs:
+
 ```sh
 make logs
 ```
 
+---
 
+## 🔧 Features
 
-## Функционал
+### 1. Create a New Task
 
-### 1) Создание новой задачи
 **POST** `/api/todo-list/tasks`
 
-#### Тело запроса:
+#### Request Body:
+
 ```json
 {
-  "title": "Купить книгу",
+  "title": "Buy a book",
   "activeAt": "2023-08-04"
 }
 ```
 
-#### Требования:
-- Все поля обязательны.
-- Заголовок не должен превышать 200 символов.
-- Дата должна быть валидной.
-- Проверка уникальности по `title` и `activeAt`.
+#### Requirements:
 
-#### Ответ:
-- **201** + `id` задачи — если задача успешно создана.
-- **404** — если задача уже существует.
+* All fields are required.
+* Title must be ≤ 200 characters.
+* Date must be valid.
+* Task must be unique by `title` and `activeAt`.
+
+#### Response:
+
+* **201** with task `id` on success.
+* **404** if the task already exists.
 
 ---
 
-### 2) Обновление задачи
+### 2. Update an Existing Task
+
 **PUT** `/api/todo-list/tasks/{ID}`
 
-#### Тело запроса:
+#### Request Body:
+
 ```json
 {
-  "title": "Купить книгу - Высоконагруженные приложения",
+  "title": "Buy a book - Scalable Applications",
   "activeAt": "2023-08-05"
 }
 ```
 
-#### Требования:
-- `{ID}` обязателен.
-- Все поля обязательны.
-- Заголовок ≤ 200 символов.
-- Дата должна быть валидной.
+#### Requirements:
 
-#### Ответ:
-- **204** — если задача обновлена успешно.
-- **404** — если задача не найдена.
+* `{ID}` is required.
+* All fields are required.
+* Title must be ≤ 200 characters.
+* Date must be valid.
+
+#### Response:
+
+* **204** on success.
+* **404** if task not found.
 
 ---
 
-### 3) Удаление задачи
+### 3. Delete a Task
+
 **DELETE** `/api/todo-list/tasks/{ID}`
 
-#### Требования:
-- `{ID}` обязателен.
+#### Requirements:
 
-#### Ответ:
-- **204** — если задача успешно удалена.
-- **404** — если задача не найдена.
+* `{ID}` is required.
+
+#### Response:
+
+* **204** on success.
+* **404** if task not found.
 
 ---
 
-### 4) Пометка задачи выполненной
+### 4. Mark Task as Done
+
 **PUT** `/api/todo-list/tasks/{ID}/done`
 
-#### Требования:
-- `{ID}` обязателен.
-- Статус задачи изменяется на "выполнено".
+#### Requirements:
 
-#### Ответ:
-- **204** — если задача успешно обновлена.
-- **404** — если задача не найдена.
+* `{ID}` is required.
+* Updates task status to "done".
+
+#### Response:
+
+* **204** on success.
+* **404** if task not found.
 
 ---
 
-### 5) Получение списка задач по статусу
+### 5. Get Tasks by Status
+
 **GET** `/api/todo-list/tasks?status=active|done`
 
-#### Правила:
-- `status` необязателен, по умолчанию `active`.
-- Если `status=active`, возвращаются все задачи, у которых `activeAt` ≤ текущего дня.
-- Задачи сортируются по дате создания.
-- Если день выходной (суббота/воскресенье), к заголовку добавляется префикс: `ВЫХОДНОЙ- {заголовок}`.
+#### Rules:
 
-#### Ответ:
+* `status` is optional, defaults to `active`.
+* If `status=active`, returns tasks where `activeAt` ≤ today.
+* Tasks are sorted by creation date.
+* If the day is a weekend (Saturday/Sunday), the title gets a prefix: `WEEKEND - {title}`.
+
+#### Response:
+
 ```json
 [
   {
     "id": "65f19340848f4be025160391",
-    "title": "Купить книгу - Высоконагруженные приложения",
+    "title": "Buy a book - Scalable Applications",
     "activeAt": "2023-08-05"
   },
   {
     "id": "75f19340848f4be025160392",
-    "title": "Купить квартиру :)",
+    "title": "Buy an apartment :)",
     "activeAt": "2023-08-05"
   }
 ]
@@ -141,10 +166,10 @@ make logs
 
 ---
 
-### 6) Удобный UI
+### 6. Minimalistic UI
 
-Сделан минималистичный рендеринг сайта :)
+A lightweight web interface is available.
 
-Для этого достаточно подключиться через браузер на `http://localhost:8080/api/todo-list`
+Visit: `http://localhost:8080/api/todo-list`
 
-![сюда баурм](image.png)
+![screenshot](image.png)
